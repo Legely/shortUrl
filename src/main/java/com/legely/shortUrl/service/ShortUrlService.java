@@ -6,9 +6,21 @@ import com.legely.shortUrl.repository.ShortUrlRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.util.Optional;
+
 @Service
 public class ShortUrlService {
     private final ShortUrlRepository shortUrlRepository;
+
+
+    // Алфавит для Base62 (буквы и цифры)
+    private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 6;
+    private final SecureRandom random = new SecureRandom();
+
+
+
 
     public ShortUrlService(ShortUrlRepository shortUrlRepository) {
         this.shortUrlRepository = shortUrlRepository;
@@ -17,21 +29,72 @@ public class ShortUrlService {
 
     // создание ссылки
     @Transactional
-    public ShortUrlResponse createShortUrl(ShortUrlRequest shortUrlRequest) {
-       ShortUrl shortUrl = new ShortUrl();
+    public ShortUrlResponse createShortUrl(ShortUrlRequest request) {
+        String shortCode = generateUniqueShortCode();
+
+        ShortUrl shortUrl = new ShortUrl(request.originalUrl(),shortCode);
+        ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
+
+        String fullUrl = "http://localhost:8080/" + savedUrl.getShortCode();
+
+        return new ShortUrlResponse(
+                savedUrl.getShortCode(),
+                fullUrl,
+                savedUrl.getOriginalUrl(),
+                savedUrl.getCreatedAt()
+        );
 
     }
 
     // метод перехода
-    @Transactional(readOnly = true)
-    public ShortUrlResponse gotoOriginalUrl(String shortCode) {
+    @Transactional
+    public String gotoOriginalUrl(String shortCode) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new RuntimeException("Ссылка с кодом " + shortCode + " не найдена"));
 
+
+        shortUrl.incrementClickCount();
+
+        return shortUrl.getOriginalUrl();
     }
 
     // метод получения статы
     @Transactional(readOnly = true)
-    public ShortUrlResponse statsShortUrl(String shortCode) {
+    public ShortUrlStatsResponse statsShortUrl(String shortCode) {
 
+        ShortUrl shortUrl = shortUrlRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new RuntimeException("Ссылка с кодом " + shortCode + " не найдена"));
+
+        return new ShortUrlStatsResponse(
+                shortUrl.getShortCode(),
+                shortUrl.getOriginalUrl(),
+                shortUrl.getClickCount(),
+                shortUrl.getCreatedAt()
+        );
+
+    }
+
+
+
+    // Вспомогательный метод: генерирует код и гарантирует отсутствие коллизий в БД
+    private String generateUniqueShortCode() {
+        for (int attempt = 0; attempt < 30; attempt++) {
+            String code = generateRandomString(CODE_LENGTH);
+            if (!shortUrlRepository.existsByShortCode(code)) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Не удалось сгенерировать уникальный код ссылки");
+    }
+
+    // Генерация случайной строки фиксированной длины
+    private String generateRandomString(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(ALPHABET.length());
+            sb.append(ALPHABET.charAt(index));
+        }
+        return sb.toString();
     }
 
 

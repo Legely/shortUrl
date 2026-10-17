@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST})
+@CrossOrigin(origins = "*")
 public class ShortUrlController {
     private ShortUrlService shortUrlService;
 
@@ -44,5 +44,19 @@ public class ShortUrlController {
     @GetMapping("/api/v1/urls/{shortCode}/stats")
     public ShortUrlStatsResponse statsShortUrl(@PathVariable String shortCode) {
         return shortUrlService.statsShortUrl(shortCode);
+    }
+
+    @DeleteMapping("/api/v1/urls")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAllUrls()
+    {
+         shortUrlService.deleteAll();
+    }
+
+    @DeleteMapping("/api/v1/urls/{shortCode}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void DeleteByShortCode(@PathVariable String shortCode)
+    {
+        shortUrlService.deleteByShortCode(shortCode);
     }
 }

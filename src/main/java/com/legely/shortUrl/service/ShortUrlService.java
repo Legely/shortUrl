@@ -90,7 +90,20 @@ public class ShortUrlService {
                 .toList();
     }
 
+    @Transactional
+    public void deleteByShortCode(String shortCode) {
+        if(!shortUrlRepository.existsByShortCode(shortCode)) {
+            throw new RuntimeException("Ссылка с кодом " + shortCode + " не найдена");
+        }
+        shortUrlRepository.deleteByShortCode(shortCode);
 
+    }
+
+
+    @Transactional
+    public void  deleteAll() {
+        shortUrlRepository.deleteAll();
+    }
 
 
 

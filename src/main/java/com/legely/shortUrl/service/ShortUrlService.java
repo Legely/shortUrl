@@ -7,10 +7,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ShortUrlService {
+
+    String MAIN_URL = "http://localhost:8080/";
     private final ShortUrlRepository shortUrlRepository;
 
 
@@ -35,7 +38,7 @@ public class ShortUrlService {
         ShortUrl shortUrl = new ShortUrl(request.originalUrl(),shortCode);
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
 
-        String fullUrl = "http://localhost:8080/" + savedUrl.getShortCode();
+        String fullUrl = MAIN_URL + savedUrl.getShortCode();
 
         return new ShortUrlResponse(
                 savedUrl.getShortCode(),
@@ -73,6 +76,21 @@ public class ShortUrlService {
         );
 
     }
+    // метод получения статы
+    @Transactional(readOnly = true)
+    public List<ShortUrlResponse> findAll() {
+        return shortUrlRepository.findAll()
+                .stream()
+                .map(url -> new ShortUrlResponse(
+                        url.getShortCode(),
+                        MAIN_URL + url.getShortCode(),
+                        url.getOriginalUrl(),
+                        url.getCreatedAt()
+                ))
+                .toList();
+    }
+
+
 
 
 

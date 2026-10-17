@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST})
@@ -19,6 +20,12 @@ public class ShortUrlController {
     public ShortUrlController(ShortUrlService shortUrlService) {
         this.shortUrlService = shortUrlService;
     }
+    @GetMapping("/api/v1/urls")
+    public List<ShortUrlResponse> getAllUrls()
+    {
+        return shortUrlService.findAll();
+    }
+
 
     @PostMapping("/api/v1/urls")
     @ResponseStatus(HttpStatus.CREATED)

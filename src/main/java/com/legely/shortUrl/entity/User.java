@@ -3,7 +3,7 @@ package com.legely.shortUrl.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "shorturl")
+@Table(name = "users")
 public class User {
 
     @Id
